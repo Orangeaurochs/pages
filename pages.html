@@ -1,0 +1,151 @@
+<html>
+<head>
+<title>A script to find the absolute no. of pages based on the 300$a</title>
+<script type="text/javascript">
+// Some useful reference pages
+// [regex reference] http://www.regular-expressions.info/javascript.html
+// [regex tester] http://www.regular-expressions.info/javascriptexample.html
+// [js replace]https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String/replace
+// [js match] https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String/match
+
+// An array of test examples
+var dollar_a = [
+  "9 p.",
+  "9p",
+  "30 leaves",
+  "30 p., 20 leaves",
+  "xiv, 20 p.",
+  "20, 30 p.",
+  "20, 30, 40 p.",
+  "xv, 20, 30, 40 p., 5, 5 leaves of plates",
+  "clviii, ii, 4, vi p.",
+   "[100], 150-200, [350-450], 500 p.",
+  "232, 221-252 p.",
+  "[16], 133, [2], 134-143, [2], 144-153, [2], 154-159, [2], 160-175, [2], 176-187, [2], 188-201, [2], 202-211, [2], 212-219, [2], 220-229, [2], 230-338 [i.e. 348], 347-423, [2], 424-430, [3], 432-436, [3], 438-578, 577-860, [24] p."
+];
+
+// Convert Roman to Arabic
+// deromanize function by Steven Levithan
+// http://blog.stevenlevithan.com/archives/javascript-roman-numeral-converter
+
+function deromanize (str) {
+	var	str = str.toUpperCase(),
+		validator = /^M*(?:D?C{0,3}|C[MD])(?:L?X{0,3}|X[CL])(?:V?I{0,3}|I[XV])$/,
+		token = /[MDLV]|C[MD]?|X[CL]?|I[XV]?/g,
+		key = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1},
+		num = 0, m;
+	if (!(str && validator.test(str)))
+		return false;
+	while (m = token.exec(str))
+		num += key[m[0]];
+	return num;
+}
+
+// Convert text to pages
+function text_to_pages (text) {
+
+
+  // Convert Roman to Arabic
+  var roman_texts=text.match(/[ivxlc]*[, ]/g);
+  if (roman_texts) {
+    for (i=0; i<roman_texts.length; i++) {
+      // Remove space
+      roman_texts[i]=roman_texts[i].replace(/[, ]/,"");
+      var arabic_text = deromanize(roman_texts[i])+" ";
+      text = text.replace(roman_texts[i],arabic_text+" ");
+    }
+  }
+
+  // Deal with ranges
+  while (text.match(/\d+-\d+/)) {
+    var range_text=text.match(/\d+-\d+/);
+    var range_numbers = range_text[0].match(/\d+/g);
+    var range_start = range_numbers[0];
+    var range_end = range_numbers[1];
+    var range_total = range_end-range_start+1;
+    text=text.replace(/\d+-\d+/, range_total);
+  }
+
+  // Convert 20, 30 p. to 20 p. 30 p
+  while (text.match(/\d*,/)) {
+    text = text.replace(/(\d*),(.*?(p|leaves))/, "$1 $3 $2");
+  }  
+  // Find sequences
+  var sequences = text.match(/\d+.*?(,|p|leaves)/g); // one or more nos, some chars, p or leaves
+  // go through sequences
+  var pages = 0;
+  for (var i=0; i<sequences.length; i++) {
+    // Extract no
+    var number = parseFloat(sequences[i].match(/\d+/g)[0]);
+    var units = sequences[i].match(/(p|leaves)/g)[0];
+    if (units == "p") {
+      pages+=number;
+    }
+    if (units == "leaves") {
+      pages+=number*2;
+    }
+  }
+  return pages;
+}
+
+// Calculate no. of pages based on form input and put answer into the output box
+function calculate_output () {
+  document.form.output.value=text_to_pages(document.form.input.value);
+}
+
+// Script to clear search form on first click
+var clicks = 0;
+function clear_input () {
+  if (clicks==0) { // if search form not been clicked yet...
+    document.form.input.value=""; // ... clear form and ...
+    clicks=1; // ... change clicks to one so it doesn't happen again.
+  }
+}
+</script>
+</head>
+
+<body>
+<h1>A script to find the absolute no. of pages based on the 300$a</h1>
+<p>NB: 1 leaf = 2 pages.</p>
+<p>From a Mashcat 2012 session: see the <a href="http://www.aurochs.org/aurlog/2012/07/10/how-big-is-my-book-mashcat-session/">write-up</a> for more details.</p>
+<form name="form" id="form">
+<table border="1">
+<tr><th>300$a</th><th>Size of item in pages</th></tr>
+<script type="text/javascript">
+
+// Test examples in array dollar_a and display results in a table
+for (var i=0; i<dollar_a.length; i++) {
+  document.write("<tr>");
+  document.write("<td>" + dollar_a[i] + "</td>");
+  document.write("<td>" + text_to_pages(dollar_a[i]) + "</td>");
+  document.write("</tr>");
+}
+ 
+</script>
+  <tr>
+    <td>
+      <input id="input" type="text" size="40" value="Try your own example here" onfocus="clear_input()">
+      <input type="button" value="Submit" onclick="calculate_output()">
+    </td>
+    <td>
+      <input id="output" type="text" size="20">
+    </td>
+  </tr>
+</table>
+</form><p><a name="orangeaurochs"></a>
+Thomas Meehan (Orangeaurochs)<br>
+Homepage: <a href="http://www.aurochs.org/">Aurochs.org</a><br>
+Blog: <a href="http://www.aurochs.org/aurlog/">Aurlog</a><br>
+Twitter: <a href="http://twitter.com/orangeaurochs">Orangeaurochs</a><br>
+<br>
+July 2012
+</p>
+
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
+<script type="text/javascript">
+  _uacct = "UA-713234-1";
+  urchinTracker();
+</script>
+
+</body>
+</html>
